@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subir PDF con Drag & Drop</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top, #f5f5f5, #dadada);
+      }
+
+      .app {
+        width: min(900px, 95vw);
+        min-height: 70vh;
+        padding: 32px;
+        border-radius: 28px;
+        background: #ffffffee;
+        box-shadow: 0 25px 60px rgb(0 0 0 / 0.1);
+        display: grid;
+        gap: 24px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.6rem, 4vw, 2.6rem);
+        color: #222;
+      }
+
+      p {
+        margin: 0;
+        color: #444;
+        line-height: 1.5;
+      }
+
+      .dropzone {
+        flex: 1;
+        border: 2px dashed #a0a0a0;
+        border-radius: 20px;
+        background: #fafafa;
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        text-align: center;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .dropzone.dragover {
+        border-color: #2563eb;
+        background: #ebf2ff;
+      }
+
+      .dropzone button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 999px;
+        background: #2563eb;
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .dropzone button:focus-visible {
+        outline: 3px solid #93c5fd;
+        outline-offset: 3px;
+      }
+
+      .preview {
+        width: 100%;
+        height: 400px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #f0f0f0;
+        display: none;
+      }
+
+      .preview embed {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+
+      .file-info {
+        display: none;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .file-info span {
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>Arrastra y suelta tu PDF</h1>
+        <p>
+          Puedes arrastrar el archivo dentro del recuadro o hacer clic para buscarlo
+          manualmente. La vista previa se mostrará automáticamente.
+        </p>
+      </header>
+
+      <section class="dropzone" id="dropzone">
+        <div aria-hidden="true" style="font-size: 3rem">📄</div>
+        <p>
+          Suelta aquí tu archivo PDF<br />
+          <small>o haz clic para seleccionarlo</small>
+        </p>
+        <button type="button" id="selectBtn">Elegir archivo</button>
+        <input type="file" id="fileInput" accept="application/pdf" hidden />
+      </section>
+
+      <section class="file-info" id="fileInfo">
+        <p>
+          <span>Nombre:</span>
+          <strong id="fileName">—</strong>
+        </p>
+        <p>
+          <span>Tamaño:</span>
+          <strong id="fileSize">—</strong>
+        </p>
+      </section>
+
+      <div class="preview" id="preview">
+        <embed id="pdfViewer" type="application/pdf" />
+      </div>
+    </main>
+
+    <script>
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('fileInput');
+      const selectBtn = document.getElementById('selectBtn');
+      const preview = document.getElementById('preview');
+      const pdfViewer = document.getElementById('pdfViewer');
+      const fileInfo = document.getElementById('fileInfo');
+      const fileName = document.getElementById('fileName');
+      const fileSize = document.getElementById('fileSize');
+
+      const formatBytes = (bytes) => {
+        if (!bytes) return '0 B';
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+      };
+
+      const openPdf = (file) => {
+        if (file?.type !== 'application/pdf') {
+          alert('Por favor selecciona un archivo PDF');
+          return;
+        }
+
+        const url = URL.createObjectURL(file);
+        pdfViewer.src = url;
+        preview.style.display = 'block';
+        fileInfo.style.display = 'flex';
+        fileName.textContent = file.name;
+        fileSize.textContent = formatBytes(file.size);
+      };
+
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          dropzone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          dropzone.classList.remove('dragover');
+        });
+      });
+
+      dropzone.addEventListener('drop', (event) => {
+        const file = event.dataTransfer.files[0];
+        if (file) {
+          openPdf(file);
+        }
+      });
+
+      selectBtn.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          openPdf(file);
+        }
+      });
+    </script>
+  </body>
+</html>
